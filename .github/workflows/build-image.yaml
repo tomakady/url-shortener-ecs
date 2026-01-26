@@ -51,7 +51,7 @@ jobs:
         exit-code: '0'
 
     - name: Upload Trivy results to GitHub Security
-      uses: github/codeql-action/upload-sarif@v3
+      uses: github/codeql-action/upload-sarif@v4
       if: always()
       with:
         sarif_file: 'trivy-results.sarif'
@@ -59,4 +59,4 @@ jobs:
     - name: Push to Amazon ECR
       run: |
         docker push ${{ steps.build-image.outputs.image }}
-        docker push ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
+        docker push ${{ steps.login-ecr.outputs.registry }}/${{ env.PROJECT_NAME }}:latest
