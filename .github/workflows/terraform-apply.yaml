@@ -1,0 +1,46 @@
+name: Terraform Apply
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to apply Terraform to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
+permissions: 
+  id-token: write
+  contents: read  
+
+env:
+  AWS_REGION: eu-west-2
+
+jobs:   
+  apply:
+    runs-on: ubuntu-24.04
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+
+    steps:
+
+        - name: Checkout
+          uses: actions/checkout@v4
+
+        - name: Configure AWS credentials w/ OIDC
+          uses: aws-actions/configure-aws-credentials@v4
+          with:
+            role-to-assume: ${{ secrets.ADMIN_ARN }}
+            aws-region: ${{ env.AWS_REGION }}
+
+        - name: Run checkov scan
+          uses: bridgecrewio/checkov-action@v12
+
+        - name: Terraform apply
+          uses: dflook/terraform-apply@v2
+          with:
+            path: infra/envs/${{ github.event.inputs.environment || 'dev' }}
+            auto_approve: true

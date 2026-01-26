@@ -1,0 +1,29 @@
+# Copy this file to terraform.tfvars and update with your values
+
+project_name = "url-shortener"
+
+# AWS region for backend resources
+region = "us-east-1"
+
+# Optional: Specify a custom bucket name (must be globally unique)
+# If left empty, a name will be auto-generated
+# state_bucket_name = "my-custom-terraform-state-bucket"
+
+# DynamoDB table name for state locking
+dynamodb_table_name = "terraform-state-lock"
+
+# Enable versioning (recommended: true)
+enable_versioning = true
+
+# Enable encryption (recommended: true)
+enable_encryption = true
+
+# GitHub OIDC Configuration
+enable_github_oidc = true
+github_repo        = "your-username/ecs-v2"  # Update with your GitHub repo: owner/repo-name
+
+# Optional: Add custom tags
+# tags = {
+#   Environment = "global"
+#   Project     = "url-shortener"
+# }

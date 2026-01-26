@@ -1,0 +1,52 @@
+name: Terraform Destroy
+
+on: 
+    workflow_dispatch: 
+        inputs: 
+            environment:
+                description: 'Environment to destroy'
+                required: true
+                default: 'dev'
+                type: choice
+                options:
+                  - dev
+                  - staging
+                  - prod
+            confirm:
+                description: 'Type "yes" to confirm deletion of all infrastructure'
+                required: true
+
+permissions: 
+  id-token: write
+  contents: read 
+
+env:
+  AWS_REGION: eu-west-2  
+
+jobs:   
+  destroy:
+    runs-on: ubuntu-24.04
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v4    
+
+    - name: Configure AWS credentials w/ OIDC
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.ADMIN_ARN }}
+        aws-region: ${{ env.AWS_REGION }}
+    
+    - name: Terraform destroy
+      if: ${{ inputs.confirm == 'yes' }}
+      uses: dflook/terraform-destroy@v2
+      with:
+        path: infra/envs/${{ github.event.inputs.environment || 'dev' }}
+    
+    - name: Destroy cancelled
+      if: ${{ inputs.confirm != 'yes' }}
+      run: |
+        echo "Destroy cancelled. You must type 'yes' to confirm."
+        exit 1

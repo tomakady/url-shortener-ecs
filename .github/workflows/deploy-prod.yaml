@@ -1,0 +1,102 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Docker image tag to deploy (SHA or tag)'
+        required: true
+
+permissions: 
+  id-token: write
+  contents: read    
+
+env:
+  AWS_REGION: eu-west-2
+  PROJECT_NAME: url-shortener
+  ENVIRONMENT: prod
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-24.04
+    environment: prod
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials w/ OIDC
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        aws-region: ${{ env.AWS_REGION }}
+    
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Verify image exists in ECR
+      run: |
+        aws ecr describe-images \
+          --repository-name ${{ env.PROJECT_NAME }} \
+          --image-ids imageTag=${{ inputs.image_tag }} \
+          --query 'imageDetails[0].imageTags' \
+          --output text || (echo "Image tag ${{ inputs.image_tag }} not found in ECR" && exit 1)
+
+    - name: Set image
+      id: set-image
+      run: |
+        echo "image=${{ steps.login-ecr.outputs.registry }}/${{ env.PROJECT_NAME }}:${{ inputs.image_tag }}" >> $GITHUB_OUTPUT
+
+    - name: Download task definition
+      run: |
+        aws ecs describe-task-definition \
+          --task-definition ${{ env.PROJECT_NAME }}-${{ env.ENVIRONMENT }} \
+          --query taskDefinition > task-definition.json
+
+    - name: Fill in the new image ID in the Amazon ECS task definition
+      id: task-def
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
+      with:
+        task-definition: task-definition.json
+        container-name: app
+        image: ${{ steps.set-image.outputs.image }}
+
+    - name: Register new task definition
+      id: register-task-def
+      run: |
+        TASK_DEF_ARN=$(aws ecs register-task-definition \
+          --cli-input-json file://${{ steps.task-def.outputs.task-definition }} \
+          --query 'taskDefinition.taskDefinitionArn' \
+          --output text)
+        echo "task-def-arn=$TASK_DEF_ARN" >> $GITHUB_OUTPUT
+
+    - name: Create CodeDeploy deployment
+      run: |
+        # Create AppSpec content
+        APPSPEC=$(cat <<EOF
+        {
+          "version": 0.0,
+          "Resources": [
+            {
+              "TargetService": {
+                "Type": "AWS::ECS::Service",
+                "Properties": {
+                  "TaskDefinition": "${{ steps.register-task-def.outputs.task-def-arn }}",
+                  "LoadBalancerInfo": {
+                    "ContainerName": "app",
+                    "ContainerPort": 8080
+                  }
+                }
+              }
+            }
+          ]
+        }
+        EOF
+        )
+        
+        # Create deployment
+        aws deploy create-deployment \
+          --application-name ${{ env.PROJECT_NAME }}-${{ env.ENVIRONMENT }} \
+          --deployment-group-name ${{ env.PROJECT_NAME }}-${{ env.ENVIRONMENT }}-deployment-group \
+          --revision revisionType=AppSpecContent,appSpecContent="$APPSPEC"

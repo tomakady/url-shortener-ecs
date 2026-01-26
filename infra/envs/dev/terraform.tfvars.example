@@ -1,0 +1,25 @@
+# Copy this file to terraform.tfvars and update with your values
+
+project_name = "url-shortener"
+
+# AWS region for backend resources
+region = "us-east-1"
+
+# Optional: Specify a custom bucket name (must be globally unique)
+# If left empty, a name will be auto-generated
+# state_bucket_name = "my-custom-terraform-state-bucket"
+
+# DynamoDB table name for state locking
+dynamodb_table_name = "terraform-state-lock"
+
+# Enable versioning (recommended: true)
+enable_versioning = true
+
+# Enable encryption (recommended: true)
+enable_encryption = true
+
+# Optional: Add custom tags
+# tags = {
+#   Environment = "global"
+#   Project     = "url-shortener"
+# }
