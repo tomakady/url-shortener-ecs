@@ -17,10 +17,6 @@ on:
         required: false
         default: 'latest'
 
-permissions: 
-  id-token: write
-  contents: read    
-
 env:
   AWS_REGION: eu-west-2
   PROJECT_NAME: url-shortener
@@ -29,17 +25,19 @@ jobs:
   deploy:
     runs-on: ubuntu-24.04
     environment: ${{ github.event.inputs.environment }}
+    permissions:
+      id-token: write
+      contents: read
 
     steps:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Configure AWS credentials w/ OIDC
+    - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
         aws-region: ${{ env.AWS_REGION }}
-        audience: sts.amazonaws.com
     
     - name: Login to Amazon ECR
       id: login-ecr
@@ -50,14 +48,14 @@ jobs:
       run: |
         aws ecr describe-images \
           --repository-name ${{ env.PROJECT_NAME }} \
-          --image-ids imageTag=${{ inputs.image_tag || 'latest' }} \
+          --image-ids imageTag=${{ github.event.inputs.image_tag || 'latest' }} \
           --query 'imageDetails[0].imageTags' \
-          --output text || (echo "Image tag ${{ inputs.image_tag || 'latest' }} not found in ECR" && exit 1)
+          --output text || (echo "Image tag ${{ github.event.inputs.image_tag || 'latest' }} not found in ECR" && exit 1)
 
     - name: Set image tag
       id: set-image
       run: |
-        IMAGE_TAG="${{ inputs.image_tag || 'latest' }}"
+        IMAGE_TAG="${{ github.event.inputs.image_tag || 'latest' }}"
         echo "image-tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
         echo "image=${{ steps.login-ecr.outputs.registry }}/${{ env.PROJECT_NAME }}:${IMAGE_TAG}" >> $GITHUB_OUTPUT
 
