@@ -15,7 +15,7 @@ on:
 
 env:
   AWS_REGION: eu-west-2
-  ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+  PROJECT_NAME: url-shortener
   TF_VERSION: '1.6.0'
 
 jobs:
@@ -84,12 +84,12 @@ jobs:
             > task-def.json
                 
           AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-          IMAGE_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}:${GITHUB_SHA}"
+          IMAGE_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${PROJECT_NAME}:${GITHUB_SHA}"
           echo "Using IMAGE_URI=$IMAGE_URI"
-
+          
           aws ecr describe-images \
             --region "$AWS_REGION" \
-            --repository-name "$ECR_REPOSITORY" \
+            --repository-name "$PROJECT_NAME" \
             --image-ids imageTag="$GITHUB_SHA" >/dev/null
 
           jq --arg IMAGE "$IMAGE_URI" \
