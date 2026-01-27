@@ -87,10 +87,16 @@ jobs:
           IMAGE_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${PROJECT_NAME}:${GITHUB_SHA}"
           echo "Using IMAGE_URI=$IMAGE_URI"
           
-          aws ecr describe-images \
+          # Check if image exists, if not provide helpful error
+          if ! aws ecr describe-images \
             --region "$AWS_REGION" \
             --repository-name "$PROJECT_NAME" \
-            --image-ids imageTag="$GITHUB_SHA" >/dev/null
+            --image-ids imageTag="$GITHUB_SHA" >/dev/null 2>&1; then
+            echo "Error: Image with tag ${GITHUB_SHA} does not exist in ECR repository ${PROJECT_NAME}"
+            echo "Please ensure the build-image workflow has completed successfully for this commit."
+            echo "You can trigger it manually or wait for it to complete if it's currently running."
+            exit 1
+          fi
 
           jq --arg IMAGE "$IMAGE_URI" \
           '.containerDefinitions |= map(if .name=="app" then .image=$IMAGE else . end)' \
