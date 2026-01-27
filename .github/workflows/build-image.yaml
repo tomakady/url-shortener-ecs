@@ -1,6 +1,10 @@
-name: Build and Push Docker Image
+name: Build and Push to ECR
 
 on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'app/**'
   workflow_dispatch:
 
 env:
@@ -8,54 +12,68 @@ env:
   PROJECT_NAME: url-shortener
 
 jobs:
-  build:
+  build-and-push:
+    name: Build, Scan, and Push
     runs-on: ubuntu-24.04
     permissions:
       id-token: write
       contents: read
       security-events: write
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-        aws-region: ${{ env.AWS_REGION }}
     
-    - name: Login to Amazon ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v2
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Build and tag image 
-      id: build-image
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        IMAGE_TAG: ${{ github.sha }}
-        ECR_REPOSITORY: ${{ env.PROJECT_NAME }}
-      run: |
-        cd app
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-        docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
-        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
-        
-    - name: Run Trivy vulnerability scanner
-      uses: aquasecurity/trivy-action@0.28.0
-      with:
-        image-ref: ${{ steps.build-image.outputs.image }}
-        format: 'sarif'
-        output: 'trivy-results.sarif'
-        exit-code: '0'
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-    - name: Upload Trivy results to GitHub Security
-      uses: github/codeql-action/upload-sarif@v4
-      if: always()
-      with:
-        sarif_file: 'trivy-results.sarif'
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: github-actions-${{ github.run_number }}
 
-    - name: Push to Amazon ECR
-      run: |
-        docker push ${{ steps.build-image.outputs.image }}
-        docker push ${{ steps.login-ecr.outputs.registry }}/${{ env.PROJECT_NAME }}:latest
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build Docker image
+        id: build-image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./app
+          platform: linux/amd64
+          push: false
+          load: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.PROJECT_NAME }}:${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.PROJECT_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ steps.login-ecr.outputs.registry }}/${{ env.PROJECT_NAME }}:${{ github.sha }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          exit-code: '0'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v4
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Push to ECR
+        run: |
+          docker push ${{ steps.login-ecr.outputs.registry }}/${{ env.PROJECT_NAME }}:${{ github.sha }}
+          docker push ${{ steps.login-ecr.outputs.registry }}/${{ env.PROJECT_NAME }}:latest
+
+      - name: Output image details
+        run: |
+          echo "Image pushed successfully"
+          echo "Repository: ${{ env.PROJECT_NAME }}"
+          echo "Image Tag: ${{ github.sha }}"
+          echo "Image URI: ${{ steps.login-ecr.outputs.registry }}/${{ env.PROJECT_NAME }}:${{ github.sha }}"

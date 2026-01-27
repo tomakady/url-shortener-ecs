@@ -39,7 +39,6 @@ module "dynamodb" {
   source = "../../modules/dynamodb"
 
   project_name = "url-shortener"
-  environment  = "dev"
 
   enable_point_in_time_recovery = true
 
@@ -53,7 +52,6 @@ module "iam" {
   source = "../../modules/iam"
 
   project_name = "url-shortener"
-  environment  = "dev"
   aws_region   = local.region
 
   enable_dynamodb_access = true
@@ -80,7 +78,6 @@ module "ecr" {
   source = "../../modules/ecr"
 
   project_name         = "url-shortener"
-  environment          = "dev"
   image_tag_mutability = "MUTABLE"
   scan_on_push         = true
   image_count_to_keep  = 10
@@ -95,7 +92,6 @@ module "route53" {
   source = "../../modules/route53"
 
   project_name = "url-shortener"
-  environment  = "dev"
   domain_name  = "tomakady.com"
   subdomain    = "url.shortener"
 
@@ -111,7 +107,6 @@ module "acm" {
   source = "../../modules/acm"
 
   project_name = "url-shortener"
-  environment  = "dev"
   domain_name  = "url.shortener.tomakady.com"
   zone_id      = module.route53.zone_id
 
@@ -140,7 +135,6 @@ module "waf" {
   source = "../../modules/waf"
 
   project_name = "url-shortener"
-  environment  = "dev"
   alb_arn      = module.alb.alb_arn
 
   tags = local.common_tags
@@ -153,7 +147,6 @@ module "ecs" {
   source = "../../modules/ecs"
 
   project_name = "url-shortener"
-  environment  = "dev"
   aws_region   = local.region
 
   private_subnet_ids    = module.vpc.private_subnet_ids
@@ -193,7 +186,6 @@ module "codedeploy" {
   source = "../../modules/codedeploy"
 
   project_name = "url-shortener"
-  environment  = "dev"
 
   ecs_cluster_name      = module.ecs.cluster_name
   ecs_service_name      = module.ecs.service_name

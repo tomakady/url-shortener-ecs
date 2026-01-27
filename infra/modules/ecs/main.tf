@@ -1,19 +1,19 @@
 # CloudWatch Log Group
 resource "aws_cloudwatch_log_group" "main" {
-  name              = "/ecs/${var.project_name}-${var.environment}"
+  name              = "/ecs/${var.project_name}"
   retention_in_days = var.log_retention_days
 
   tags = merge(
     var.tags,
     {
-      Name = "${var.project_name}-${var.environment}-logs"
+      Name = "${var.project_name}-logs"
     }
   )
 }
 
 # ECS Cluster
 resource "aws_ecs_cluster" "main" {
-  name = "${var.project_name}-${var.environment}-cluster"
+  name = "${var.project_name}-cluster"
 
   setting {
     name  = "containerInsights"
@@ -23,14 +23,14 @@ resource "aws_ecs_cluster" "main" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.project_name}-${var.environment}-cluster"
+      Name = "${var.project_name}-cluster"
     }
   )
 }
 
 # ECS Task Definition
 resource "aws_ecs_task_definition" "main" {
-  family                   = "${var.project_name}-${var.environment}"
+  family                   = "${var.project_name}-ecs-task"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   cpu                      = var.task_cpu
@@ -68,14 +68,14 @@ resource "aws_ecs_task_definition" "main" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.project_name}-${var.environment}-task"
+      Name = "${var.project_name}-task"
     }
   )
 }
 
 # ECS Service
 resource "aws_ecs_service" "main" {
-  name            = "${var.project_name}-${var.environment}-service"
+  name            = "${var.project_name}-service"
   cluster         = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.main.arn
   desired_count   = var.desired_count
@@ -107,7 +107,7 @@ resource "aws_ecs_service" "main" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.project_name}-${var.environment}-service"
+      Name = "${var.project_name}-service"
     }
   )
 }

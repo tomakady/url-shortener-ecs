@@ -2,16 +2,6 @@ name: Terraform Apply
 
 on:
   workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Environment to apply Terraform to'
-        required: true
-        default: 'dev'
-        type: choice
-        options:
-          - dev
-          - staging
-          - prod
 
 permissions: 
   id-token: write
@@ -23,7 +13,6 @@ env:
 jobs:   
   apply:
     runs-on: ubuntu-24.04
-    environment: ${{ github.event.inputs.environment || 'dev' }}
 
     steps:
 
@@ -42,5 +31,5 @@ jobs:
         - name: Terraform apply
           uses: dflook/terraform-apply@v2
           with:
-            path: infra/envs/${{ github.event.inputs.environment || 'dev' }}
+            path: infra/envs/dev
             auto_approve: true

@@ -1,12 +1,12 @@
 # CodeDeploy Application
 resource "aws_codedeploy_app" "main" {
   compute_platform = "ECS"
-  name             = "${var.project_name}-${var.environment}"
+  name             = var.project_name
 
   tags = merge(
     var.tags,
     {
-      Name = "${var.project_name}-${var.environment}-codedeploy-app"
+      Name = "${var.project_name}-codedeploy-app"
     }
   )
 }
@@ -14,7 +14,7 @@ resource "aws_codedeploy_app" "main" {
 # CodeDeploy Deployment Group
 resource "aws_codedeploy_deployment_group" "main" {
   app_name              = aws_codedeploy_app.main.name
-  deployment_group_name = "${var.project_name}-${var.environment}-deployment-group"
+  deployment_group_name = "${var.project_name}-deployment-group"
   deployment_config_name = var.deployment_config_name
   service_role_arn       = var.codedeploy_role_arn
 
@@ -61,7 +61,7 @@ resource "aws_codedeploy_deployment_group" "main" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.project_name}-${var.environment}-codedeploy-group"
+      Name = "${var.project_name}-codedeploy-group"
     }
   )
 }

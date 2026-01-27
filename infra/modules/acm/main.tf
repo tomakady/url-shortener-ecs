@@ -9,7 +9,7 @@ resource "aws_acm_certificate" "main" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.project_name}-${var.environment}-cert"
+      Name = "${var.project_name}-cert"
     }
   )
 }

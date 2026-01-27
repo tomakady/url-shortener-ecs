@@ -1,6 +1,6 @@
 # DynamoDB Table for URL mappings
 resource "aws_dynamodb_table" "main" {
-  name         = "${var.project_name}-${var.environment}"
+  name         = var.project_name
   billing_mode = "PAY_PER_REQUEST"
 
   hash_key = "id"
@@ -17,7 +17,7 @@ resource "aws_dynamodb_table" "main" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.project_name}-${var.environment}"
+      Name = var.project_name
     }
   )
 }

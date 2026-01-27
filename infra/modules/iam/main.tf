@@ -12,10 +12,10 @@ locals {
     }]
   })
 
-  execution_role_arn     = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.project_name}-${var.environment}-execution-role"
-  task_role_arn          = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.project_name}-${var.environment}-task-role"
-  autoscaling_role_arn    = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.project_name}-${var.environment}-autoscaling-role"
-  codedeploy_role_arn     = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.project_name}-${var.environment}-codedeploy-role"
+  execution_role_arn     = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.project_name}-execution-role"
+  task_role_arn          = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.project_name}-task-role"
+  autoscaling_role_arn    = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.project_name}-autoscaling-role"
+  codedeploy_role_arn     = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.project_name}-codedeploy-role"
 
   github_actions_ecr_resources = length(var.ecr_repository_arns) > 0 ? var.ecr_repository_arns : ["*"]
   github_actions_ecs_resources = (length(var.ecs_cluster_arns) + length(var.ecs_service_arns)) > 0 ? concat(var.ecs_cluster_arns, var.ecs_service_arns) : ["*"]
@@ -27,7 +27,7 @@ locals {
 }
 
 resource "aws_iam_role" "ecs_task_execution_role" {
-  name        = "${var.project_name}-${var.environment}-execution-role"
+  name        = "${var.project_name}-execution-role"
   description = "ECS task execution role"
 
   assume_role_policy = local.ecs_assume_role_policy
@@ -35,13 +35,13 @@ resource "aws_iam_role" "ecs_task_execution_role" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.project_name}-${var.environment}-execution-role"
+      Name = "${var.project_name}-execution-role"
     }
   )
 }
 
 resource "aws_iam_role_policy" "ecs_task_execution_policy" {
-  name = "${var.project_name}-${var.environment}-execution-policy"
+  name = "${var.project_name}-execution-policy"
   role = aws_iam_role.ecs_task_execution_role.id
 
   policy = jsonencode({
@@ -63,7 +63,7 @@ resource "aws_iam_role_policy" "ecs_task_execution_policy" {
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ]
-        Resource = "arn:aws:logs:${var.aws_region}:*:log-group:/ecs/${var.project_name}-${var.environment}*"
+        Resource = "arn:aws:logs:${var.aws_region}:*:log-group:/ecs/${var.project_name}*"
       }],
       var.enable_secrets_access ? [{
         Effect = "Allow"
@@ -80,7 +80,7 @@ resource "aws_iam_role_policy" "ecs_task_execution_policy" {
 }
 
 resource "aws_iam_role" "ecs_task_role" {
-  name        = "${var.project_name}-${var.environment}-task-role"
+  name        = "${var.project_name}-task-role"
   description = "ECS task role"
 
   assume_role_policy = local.ecs_assume_role_policy
@@ -88,13 +88,13 @@ resource "aws_iam_role" "ecs_task_role" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.project_name}-${var.environment}-task-role"
+      Name = "${var.project_name}-task-role"
     }
   )
 }
 
 resource "aws_iam_role_policy" "ecs_task_policy" {
-  name = "${var.project_name}-${var.environment}-task-policy"
+  name = "${var.project_name}-task-policy"
   role = aws_iam_role.ecs_task_role.id
 
   policy = jsonencode({
@@ -108,7 +108,7 @@ resource "aws_iam_role_policy" "ecs_task_policy" {
           "logs:PutLogEvents",
           "logs:DescribeLogStreams"
         ]
-        Resource = "arn:aws:logs:${var.aws_region}:*:log-group:/ecs/${var.project_name}-${var.environment}*"
+        Resource = "arn:aws:logs:${var.aws_region}:*:log-group:/ecs/${var.project_name}*"
       }] : [],
       var.enable_ecs_exec ? [{
         Effect = "Allow"
@@ -160,14 +160,14 @@ resource "aws_iam_openid_connect_provider" "github_actions" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.project_name}-${var.environment}-github-oidc-provider"
+      Name = "${var.project_name}-github-oidc-provider"
     }
   )
 }
 
 resource "aws_iam_role" "github_actions_role" {
   count       = var.enable_github_oidc ? 1 : 0
-  name        = "${var.project_name}-${var.environment}-github-actions-role"
+  name        = "${var.project_name}-github-actions-role"
   description = "GitHub Actions OIDC role"
 
   assume_role_policy = jsonencode({
@@ -192,14 +192,14 @@ resource "aws_iam_role" "github_actions_role" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.project_name}-${var.environment}-github-actions-role"
+      Name = "${var.project_name}-github-actions-role"
     }
   )
 }
 
 resource "aws_iam_role_policy" "github_actions_policy" {
   count = var.enable_github_oidc ? 1 : 0
-  name  = "${var.project_name}-${var.environment}-github-actions-policy"
+  name  = "${var.project_name}-github-actions-policy"
   role  = aws_iam_role.github_actions_role[0].id
 
   policy = jsonencode({
@@ -262,7 +262,7 @@ resource "aws_iam_role_policy" "github_actions_policy" {
           "ecs:TagResource"
         ]
         Resource = concat(
-          ["arn:aws:ecs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:task-definition/${var.project_name}-${var.environment}:*"],
+          ["arn:aws:ecs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:task-definition/${var.project_name}-ecs-task:*"],
           local.github_actions_ecs_resources
         )
       },
@@ -333,7 +333,7 @@ resource "aws_iam_role_policy" "github_actions_policy" {
 
 resource "aws_iam_role" "ecs_autoscaling_role" {
   count       = var.enable_autoscaling ? 1 : 0
-  name        = "${var.project_name}-${var.environment}-autoscaling-role"
+  name        = "${var.project_name}-autoscaling-role"
   description = "Application Auto Scaling role"
 
   assume_role_policy = jsonencode({
@@ -350,14 +350,14 @@ resource "aws_iam_role" "ecs_autoscaling_role" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.project_name}-${var.environment}-autoscaling-role"
+      Name = "${var.project_name}-autoscaling-role"
     }
   )
 }
 
 resource "aws_iam_role_policy" "ecs_autoscaling_policy" {
   count = var.enable_autoscaling ? 1 : 0
-  name  = "${var.project_name}-${var.environment}-autoscaling-policy"
+  name  = "${var.project_name}-autoscaling-policy"
   role  = aws_iam_role.ecs_autoscaling_role[0].id
 
   policy = jsonencode({
@@ -386,7 +386,7 @@ resource "aws_iam_role_policy" "ecs_autoscaling_policy" {
 
 # CodeDeploy Role
 resource "aws_iam_role" "codedeploy_role" {
-  name        = "${var.project_name}-${var.environment}-codedeploy-role"
+  name        = "${var.project_name}-codedeploy-role"
   description = "CodeDeploy role for ECS blue/green deployments"
 
   assume_role_policy = jsonencode({
@@ -403,13 +403,13 @@ resource "aws_iam_role" "codedeploy_role" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.project_name}-${var.environment}-codedeploy-role"
+      Name = "${var.project_name}-codedeploy-role"
     }
   )
 }
 
 resource "aws_iam_role_policy" "codedeploy_policy" {
-  name = "${var.project_name}-${var.environment}-codedeploy-policy"
+  name = "${var.project_name}-codedeploy-policy"
   role = aws_iam_role.codedeploy_role.id
 
   policy = jsonencode({

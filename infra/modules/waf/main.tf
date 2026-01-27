@@ -1,26 +1,26 @@
 # CloudWatch Log Group for WAF
 resource "aws_cloudwatch_log_group" "waf" {
-  name              = "/aws/waf/${var.project_name}-${var.environment}"
+  name              = "/aws/waf/${var.project_name}"
   retention_in_days = 7
 
   tags = merge(
     var.tags,
     {
-      Name = "${var.project_name}-${var.environment}-waf-logs"
+      Name = "${var.project_name}-waf-logs"
     }
   )
 }
 
 # CloudWatch Log Stream
 resource "aws_cloudwatch_log_stream" "waf" {
-  name           = "${var.project_name}-${var.environment}-waf-stream"
+  name           = "${var.project_name}-waf-stream"
   log_group_name = aws_cloudwatch_log_group.waf.name
 }
 
 # WAF Web ACL
 resource "aws_wafv2_web_acl" "main" {
-  name        = "${var.project_name}-${var.environment}-waf"
-  description = "WAF Web ACL for ${var.project_name} ${var.environment}"
+  name        = "${var.project_name}-waf"
+  description = "WAF Web ACL for ${var.project_name}"
   scope       = "REGIONAL"
 
   default_action {
@@ -54,7 +54,7 @@ resource "aws_wafv2_web_acl" "main" {
 
       visibility_config {
         cloudwatch_metrics_enabled = true
-        metric_name                = "${var.project_name}-${var.environment}-CommonRuleSetMetric"
+        metric_name                = "${var.project_name}-CommonRuleSetMetric"
         sampled_requests_enabled   = true
       }
     }
@@ -80,7 +80,7 @@ resource "aws_wafv2_web_acl" "main" {
 
       visibility_config {
         cloudwatch_metrics_enabled = true
-        metric_name                = "${var.project_name}-${var.environment}-KnownBadInputsMetric"
+        metric_name                = "${var.project_name}-KnownBadInputsMetric"
         sampled_requests_enabled   = true
       }
     }
@@ -106,7 +106,7 @@ resource "aws_wafv2_web_acl" "main" {
 
       visibility_config {
         cloudwatch_metrics_enabled = true
-        metric_name                = "${var.project_name}-${var.environment}-LinuxRuleSetMetric"
+        metric_name                = "${var.project_name}-LinuxRuleSetMetric"
         sampled_requests_enabled   = true
       }
     }
@@ -132,7 +132,7 @@ resource "aws_wafv2_web_acl" "main" {
 
       visibility_config {
         cloudwatch_metrics_enabled = true
-        metric_name                = "${var.project_name}-${var.environment}-RateLimitMetric"
+        metric_name                = "${var.project_name}-RateLimitMetric"
         sampled_requests_enabled   = true
       }
     }
@@ -140,14 +140,14 @@ resource "aws_wafv2_web_acl" "main" {
 
   visibility_config {
     cloudwatch_metrics_enabled = true
-    metric_name                = "${var.project_name}-${var.environment}-WAFMetric"
+    metric_name                = "${var.project_name}-WAFMetric"
     sampled_requests_enabled   = true
   }
 
   tags = merge(
     var.tags,
     {
-      Name = "${var.project_name}-${var.environment}-waf"
+      Name = "${var.project_name}-waf"
     }
   )
 }
