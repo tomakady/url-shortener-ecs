@@ -1,5 +1,10 @@
 data "aws_caller_identity" "current" {}
 
+# Data source to reference existing GitHub Actions role (managed in global/backend)
+data "aws_iam_role" "github_actions_role" {
+  name = "${var.project_name}-github-actions-role"
+}
+
 locals {
   ecs_assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -198,9 +203,9 @@ resource "aws_iam_role" "github_actions_role" {
 }
 
 resource "aws_iam_role_policy" "github_actions_policy" {
-  count = var.enable_github_oidc ? 1 : 0
-  name  = "${var.project_name}-github-actions-policy"
-  role  = aws_iam_role.github_actions_role[0].id
+  name = "${var.project_name}-github-actions-policy"
+  # Use data source if role exists externally, otherwise use created role
+  role = var.enable_github_oidc ? aws_iam_role.github_actions_role[0].id : data.aws_iam_role.github_actions_role.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -344,14 +349,20 @@ resource "aws_iam_role_policy" "github_actions_policy" {
           "iam:DeleteRolePolicy",
           "iam:PassRole"
         ]
-        Resource = [
-          local.execution_role_arn,
-          local.task_role_arn,
-          local.autoscaling_role_arn,
-          local.codedeploy_role_arn,
-          aws_iam_role.github_actions_role[0].arn,
-          aws_iam_openid_connect_provider.github_actions[0].arn
-        ]
+        Resource = concat(
+          [
+            local.execution_role_arn,
+            local.task_role_arn,
+            local.autoscaling_role_arn,
+            local.codedeploy_role_arn
+          ],
+          var.enable_github_oidc ? [
+            aws_iam_role.github_actions_role[0].arn,
+            aws_iam_openid_connect_provider.github_actions[0].arn
+          ] : [
+            data.aws_iam_role.github_actions_role.arn
+          ]
+        )
         Condition = {
           StringEquals = {
             "iam:PassedToService" = "ecs-tasks.amazonaws.com"
