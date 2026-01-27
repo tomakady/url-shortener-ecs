@@ -202,10 +202,12 @@ resource "aws_iam_role" "github_actions_role" {
   )
 }
 
+# GitHub Actions policy is managed in global/backend when enable_github_oidc = false
+# Only create policy here if OIDC is enabled in this module
 resource "aws_iam_role_policy" "github_actions_policy" {
-  name = "${var.project_name}-github-actions-policy"
-  # Use data source if role exists externally, otherwise use created role
-  role = var.enable_github_oidc ? aws_iam_role.github_actions_role[0].id : data.aws_iam_role.github_actions_role.id
+  count = var.enable_github_oidc ? 1 : 0
+  name  = "${var.project_name}-github-actions-policy"
+  role  = aws_iam_role.github_actions_role[0].id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -326,6 +328,7 @@ resource "aws_iam_role_policy" "github_actions_policy" {
           "wafv2:AssociateWebACL",
           "wafv2:DisassociateWebACL",
           "wafv2:ListResourcesForWebACL",
+          "wafv2:GetWebACLForResource",
           "wafv2:ListTagsForResource",
           "wafv2:TagResource",
           "wafv2:UntagResource",
@@ -344,7 +347,16 @@ resource "aws_iam_role_policy" "github_actions_policy" {
           "iam:ListRolePolicies",
           "iam:GetRolePolicy",
           "iam:ListAttachedRolePolicies",
-          "iam:ListInstanceProfilesForRole",
+          "iam:ListInstanceProfilesForRole"
+        ]
+        Resource = [
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.project_name}-*",
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/*"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
           "iam:PutRolePolicy",
           "iam:DeleteRolePolicy",
           "iam:PassRole"

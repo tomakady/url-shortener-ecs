@@ -238,7 +238,39 @@ resource "aws_iam_role_policy" "github_actions_policy" {
           "codedeploy:RegisterApplicationRevision",
           "codedeploy:ListDeployments",
           "codedeploy:ListApplicationRevisions",
-          "codedeploy:StopDeployment"
+          "codedeploy:StopDeployment",
+          "codedeploy:ListTagsForResource",
+          "codedeploy:TagResource",
+          "codedeploy:UntagResource",
+          "codedeploy:CreateApplication",
+          "codedeploy:DeleteApplication",
+          "codedeploy:GetDeploymentGroup",
+          "codedeploy:ListDeploymentGroups",
+          "codedeploy:CreateDeploymentGroup",
+          "codedeploy:UpdateDeploymentGroup",
+          "codedeploy:DeleteDeploymentGroup"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "wafv2:GetWebACL",
+          "wafv2:ListWebACLs",
+          "wafv2:CreateWebACL",
+          "wafv2:UpdateWebACL",
+          "wafv2:DeleteWebACL",
+          "wafv2:AssociateWebACL",
+          "wafv2:DisassociateWebACL",
+          "wafv2:ListResourcesForWebACL",
+          "wafv2:GetWebACLForResource",
+          "wafv2:ListTagsForResource",
+          "wafv2:TagResource",
+          "wafv2:UntagResource",
+          "wafv2:GetLoggingConfiguration",
+          "wafv2:PutLoggingConfiguration",
+          "wafv2:DeleteLoggingConfiguration",
+          "wafv2:ListLoggingConfigurations"
         ]
         Resource = "*"
       },
@@ -246,11 +278,15 @@ resource "aws_iam_role_policy" "github_actions_policy" {
         Effect = "Allow"
         Action = [
           "iam:GetRole",
+          "iam:ListRoles",
           "iam:GetOpenIDConnectProvider",
+          "iam:ListOpenIDConnectProviders",
           "iam:ListRolePolicies",
           "iam:GetRolePolicy",
           "iam:ListAttachedRolePolicies",
           "iam:ListInstanceProfilesForRole",
+          "iam:PutRolePolicy",
+          "iam:DeleteRolePolicy",
           "iam:PassRole"
         ]
         Resource = "*"
