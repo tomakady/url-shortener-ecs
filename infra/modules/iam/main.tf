@@ -296,7 +296,38 @@ resource "aws_iam_role_policy" "github_actions_policy" {
           "codedeploy:RegisterApplicationRevision",
           "codedeploy:ListDeployments",
           "codedeploy:ListApplicationRevisions",
-          "codedeploy:StopDeployment"
+          "codedeploy:StopDeployment",
+          "codedeploy:ListTagsForResource",
+          "codedeploy:TagResource",
+          "codedeploy:UntagResource",
+          "codedeploy:CreateApplication",
+          "codedeploy:DeleteApplication",
+          "codedeploy:GetDeploymentGroup",
+          "codedeploy:ListDeploymentGroups",
+          "codedeploy:CreateDeploymentGroup",
+          "codedeploy:UpdateDeploymentGroup",
+          "codedeploy:DeleteDeploymentGroup"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "wafv2:GetWebACL",
+          "wafv2:ListWebACLs",
+          "wafv2:CreateWebACL",
+          "wafv2:UpdateWebACL",
+          "wafv2:DeleteWebACL",
+          "wafv2:AssociateWebACL",
+          "wafv2:DisassociateWebACL",
+          "wafv2:ListResourcesForWebACL",
+          "wafv2:ListTagsForResource",
+          "wafv2:TagResource",
+          "wafv2:UntagResource",
+          "wafv2:GetLoggingConfiguration",
+          "wafv2:PutLoggingConfiguration",
+          "wafv2:DeleteLoggingConfiguration",
+          "wafv2:ListLoggingConfigurations"
         ]
         Resource = "*"
       },
