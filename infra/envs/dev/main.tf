@@ -60,7 +60,7 @@ module "iam" {
   enable_github_oidc = false  # OIDC is now managed in global/backend bootstrap
   github_repo        = ""     # Not needed when using global OIDC
 
-  terraform_state_bucket = "url-shortener-terraform-state"
+  terraform_state_bucket = "url-shortener-ecs-bucket-efbfa315"
   terraform_lock_table   = "terraform-state-lock"
 
   # Pass ECR and ECS resources for GitHub Actions permissions
