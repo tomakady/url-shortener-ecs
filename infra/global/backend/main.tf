@@ -183,6 +183,8 @@ resource "aws_iam_role_policy" "github_actions_policy" {
           "ecr:CompleteLayerUpload",
           "ecr:CreateRepository",
           "ecr:DescribeRepositories",
+          "ecr:DescribeImages",
+          "ecr:ListImages",
           "ecr:ListTagsForResource",
           "ecr:GetLifecyclePolicy"
         ]
