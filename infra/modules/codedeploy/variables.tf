@@ -19,12 +19,6 @@ variable "ecs_service_name" {
   type        = string
 }
 
-variable "alb_target_group_arn" {
-  description = "ARN of the primary ALB target group (blue) - deprecated, use blue_target_group_arn instead"
-  type        = string
-  default     = ""
-}
-
 variable "blue_target_group_arn" {
   description = "ARN of the blue ALB target group"
   type        = string

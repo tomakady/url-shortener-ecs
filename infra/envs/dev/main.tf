@@ -194,5 +194,7 @@ module "codedeploy" {
   alb_listener_arn      = module.alb.https_listener_arn
   codedeploy_role_arn   = module.iam.codedeploy_role_arn
 
+  deployment_config_name = "CodeDeployDefault.ECSCanary10Percent5Minutes"
+
   tags = local.common_tags
 }

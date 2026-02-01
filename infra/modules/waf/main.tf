@@ -1,22 +1,3 @@
-# CloudWatch Log Group for WAF
-resource "aws_cloudwatch_log_group" "waf" {
-  name              = "/aws/waf/${var.project_name}"
-  retention_in_days = 7
-
-  tags = merge(
-    var.tags,
-    {
-      Name = "${var.project_name}-waf-logs"
-    }
-  )
-}
-
-# CloudWatch Log Stream
-resource "aws_cloudwatch_log_stream" "waf" {
-  name           = "${var.project_name}-waf-stream"
-  log_group_name = aws_cloudwatch_log_group.waf.name
-}
-
 # WAF Web ACL
 resource "aws_wafv2_web_acl" "main" {
   name        = "${var.project_name}-waf"
@@ -156,4 +137,23 @@ resource "aws_wafv2_web_acl" "main" {
 resource "aws_wafv2_web_acl_association" "alb" {
   resource_arn = var.alb_arn
   web_acl_arn  = aws_wafv2_web_acl.main.arn
+}
+
+# CloudWatch Log Group for WAF
+resource "aws_cloudwatch_log_group" "waf" {
+  name              = "/aws/waf/${var.project_name}"
+  retention_in_days = 7
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.project_name}-waf-logs"
+    }
+  )
+}
+
+# CloudWatch Log Stream
+resource "aws_cloudwatch_log_stream" "waf" {
+  name           = "${var.project_name}-waf-stream"
+  log_group_name = aws_cloudwatch_log_group.waf.name
 }

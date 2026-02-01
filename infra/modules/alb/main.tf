@@ -41,6 +41,11 @@ resource "aws_lb_target_group" "blue" {
       Name = "${var.tags.Name != null ? var.tags.Name : "url-shortener"}-blue-tg"
     }
   )
+
+  # Allow deletion even if in use (CodeDeploy will be destroyed first)
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # Target Group for ECS tasks (Green) - for blue/green deployments
@@ -68,6 +73,11 @@ resource "aws_lb_target_group" "green" {
       Name = "${var.tags.Name != null ? var.tags.Name : "url-shortener"}-green-tg"
     }
   )
+
+  # Allow deletion even if in use (CodeDeploy will be destroyed first)
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # HTTP Listener (redirect to HTTPS)
