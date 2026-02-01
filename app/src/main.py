@@ -1,14 +1,13 @@
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import RedirectResponse, JSONResponse
+from fastapi.responses import RedirectResponse
 import os, hashlib, time
 from .ddb import put_mapping, get_mapping
 
 app = FastAPI()
 
-# TEMP: Return 500 to trigger CodeDeploy rollback - revert after capturing screenshot
 @app.get("/healthz")
 def health():
-    return JSONResponse(status_code=500, content={"status": "fail", "ts": int(time.time()), "version": "1.0"})
+    return {"status": "ok", "ts": int(time.time()), "version": "1.0"}
 
 @app.post("/shorten")
 async def shorten(req: Request):
