@@ -130,6 +130,7 @@ jobs:
             --output text
             
       - name: Build AppSpec and trigger CodeDeploy
+        id: codedeploy
         run: |
           TASK_DEF="${{ steps.new-task-def.outputs.new_task_arn }}"
 
@@ -150,14 +151,19 @@ jobs:
           
           APPSPEC_CONTENT=$(cat appspec.yaml | jq -Rs .)
           
-          aws deploy create-deployment \
+          DEPLOYMENT_ID=$(aws deploy create-deployment \
             --application-name url-shortener \
             --deployment-group-name url-shortener-deployment-group \
             --deployment-config-name "CodeDeployDefault.ECSCanary10Percent5Minutes" \
-            --revision "{\"revisionType\":\"AppSpecContent\",\"appSpecContent\":{\"content\":$APPSPEC_CONTENT}}"
+            --revision "{\"revisionType\":\"AppSpecContent\",\"appSpecContent\":{\"content\":$APPSPEC_CONTENT}}" \
+            --query 'deploymentId' --output text)
+          
+          echo "deployment_id=$DEPLOYMENT_ID" >> $GITHUB_OUTPUT
+          echo "Deployment started: $DEPLOYMENT_ID"
 
-      - name: Wait for deployment
-        run: sleep 15
+      - name: Wait for CodeDeploy to complete
+        run: |
+          aws deploy wait deployment-successful --deployment-id ${{ steps.codedeploy.outputs.deployment_id }}
 
       - name: Health Check
         run: |
