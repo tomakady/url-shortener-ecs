@@ -97,6 +97,7 @@ resource "aws_lb_listener" "http" {
 }
 
 # HTTPS Listener
+# default_action is managed by CodeDeploy for blue/green traffic shifting - do not overwrite
 resource "aws_lb_listener" "https" {
   load_balancer_arn = aws_lb.main.arn
   port              = "443"
@@ -107,5 +108,9 @@ resource "aws_lb_listener" "https" {
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.blue.arn
+  }
+
+  lifecycle {
+    ignore_changes = [default_action]
   }
 }
