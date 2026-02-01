@@ -97,9 +97,9 @@ resource "aws_ecs_service" "main" {
     container_port   = var.container_port
   }
 
-  # Ignore load_balancer changes since CodeDeploy manages load balancer configuration
+  # Ignore load_balancer and task_definition since CodeDeploy manages both
   lifecycle {
-    ignore_changes = [load_balancer]
+    ignore_changes = [load_balancer, task_definition]
   }
 
   depends_on = [var.alb_listener_arn]
