@@ -2,6 +2,12 @@
 
 A URL shortener service deployed on AWS ECS with blue/green deployments, WAF protection, and automated CI/CD.
 
+## Architecture
+
+<img src="images/ecs-v2-dark.drawio.png" width="720" alt="ECS v2 architecture (dark)" />
+
+<img src="images/ecs-v2-light.drawio.png" width="720" alt="ECS v2 architecture (light)" />
+
 ## Quick Start
 
 ### Base URL
